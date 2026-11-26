@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<!--
+  Macros de calculo de inercia para primitivas solidas homogeneas.
+  Todas reciben la masa (kg), las dimensiones (m) y un bloque <origin>
+  que indica el centro de masa (COM) relativo al frame del link.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Caja: x, y, z son las longitudes de los lados -->
+  <xacro:macro name="inertial_box" params="mass x y z *origin">
+    <inertial>
+      <xacro:insert_block name="origin"/>
+      <mass value="${mass}"/>
+      <inertia ixx="${mass * (y*y + z*z) / 12.0}" ixy="0.0" ixz="0.0"
+               iyy="${mass * (x*x + z*z) / 12.0}" iyz="0.0"
+               izz="${mass * (x*x + y*y) / 12.0}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- Cilindro con eje a lo largo de Z -->
+  <xacro:macro name="inertial_cylinder" params="mass radius length *origin">
+    <inertial>
+      <xacro:insert_block name="origin"/>
+      <mass value="${mass}"/>
+      <inertia ixx="${mass * (3*radius*radius + length*length) / 12.0}" ixy="0.0" ixz="0.0"
+               iyy="${mass * (3*radius*radius + length*length) / 12.0}" iyz="0.0"
+               izz="${mass * radius * radius / 2.0}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- Esfera -->
+  <xacro:macro name="inertial_sphere" params="mass radius *origin">
+    <inertial>
+      <xacro:insert_block name="origin"/>
+      <mass value="${mass}"/>
+      <inertia ixx="${2.0/5.0 * mass * radius * radius}" ixy="0.0" ixz="0.0"
+               iyy="${2.0/5.0 * mass * radius * radius}" iyz="0.0"
+               izz="${2.0/5.0 * mass * radius * radius}"/>
+    </inertial>
+  </xacro:macro>
+
+</robot>

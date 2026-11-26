@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<!-- Materiales (colores RGBA) usados en las etiquetas <visual> -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <material name="gris_oscuro">
+    <color rgba="0.2 0.2 0.2 1.0"/>
+  </material>
+
+  <material name="naranja">
+    <color rgba="1.0 0.45 0.0 1.0"/>
+  </material>
+
+  <material name="azul">
+    <color rgba="0.1 0.35 0.8 1.0"/>
+  </material>
+
+  <material name="blanco">
+    <color rgba="0.9 0.9 0.9 1.0"/>
+  </material>
+
+  <material name="rojo">
+    <color rgba="0.8 0.1 0.1 1.0"/>
+  </material>
+
+</robot>

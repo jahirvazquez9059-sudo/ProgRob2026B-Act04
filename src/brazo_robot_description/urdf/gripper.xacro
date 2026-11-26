@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<!--
+  Efector final: gripper paralelo de dos dedos prismaticos.
+  Se define como macro para poder montarlo sobre cualquier link "parent".
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Dimensiones del gripper -->
+  <xacro:property name="palm_x" value="0.10"/>
+  <xacro:property name="palm_y" value="0.03"/>
+  <xacro:property name="palm_z" value="0.02"/>
+  <xacro:property name="palm_mass" value="0.10"/>
+
+  <xacro:property name="finger_x" value="0.02"/>
+  <xacro:property name="finger_y" value="0.01"/>
+  <xacro:property name="finger_z" value="0.05"/>
+  <xacro:property name="finger_mass" value="0.03"/>
+  <xacro:property name="finger_stroke" value="0.03"/>  <!-- carrera maxima de cada dedo (m) -->
+
+  <!-- Dedo generico: side = left | right, sign = +1 | -1 -->
+  <xacro:macro name="finger" params="side sign">
+    <link name="finger_${side}">
+      <visual>
+        <origin xyz="0 0 ${finger_z/2}" rpy="0 0 0"/>
+        <geometry><box size="${finger_x} ${finger_y} ${finger_z}"/></geometry>
+        <material name="rojo"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${finger_z/2}" rpy="0 0 0"/>
+        <geometry><box size="${finger_x} ${finger_y} ${finger_z}"/></geometry>
+      </collision>
+      <xacro:inertial_box mass="${finger_mass}" x="${finger_x}" y="${finger_y}" z="${finger_z}">
+        <origin xyz="0 0 ${finger_z/2}" rpy="0 0 0"/>
+      </xacro:inertial_box>
+    </link>
+
+    <joint name="finger_${side}_joint" type="prismatic">
+      <parent link="gripper_base"/>
+      <child link="finger_${side}"/>
+      <origin xyz="0 ${sign * finger_y} ${palm_z}" rpy="0 0 0"/>
+      <axis xyz="0 ${sign} 0"/>
+      <limit lower="0.0" upper="${finger_stroke}" effort="10.0" velocity="0.2"/>
+      <dynamics damping="1.0" friction="0.1"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- Gripper completo -->
+  <xacro:macro name="gripper" params="parent *origin">
+
+    <joint name="gripper_roll_joint" type="continuous">
+      <parent link="${parent}"/>
+      <child link="gripper_base"/>
+      <xacro:insert_block name="origin"/>
+      <axis xyz="0 0 1"/>
+      <limit effort="5.0" velocity="2.0"/>
+      <dynamics damping="0.2" friction="0.05"/>
+    </joint>
+
+    <link name="gripper_base">
+      <visual>
+        <origin xyz="0 0 ${palm_z/2}" rpy="0 0 0"/>
+        <geometry><box size="${palm_x} ${palm_y} ${palm_z}"/></geometry>
+        <material name="gris_oscuro"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${palm_z/2}" rpy="0 0 0"/>
+        <geometry><box size="${palm_x} ${palm_y} ${palm_z}"/></geometry>
+      </collision>
+      <xacro:inertial_box mass="${palm_mass}" x="${palm_x}" y="${palm_y}" z="${palm_z}">
+        <origin xyz="0 0 ${palm_z/2}" rpy="0 0 0"/>
+      </xacro:inertial_box>
+    </link>
+
+    <xacro:finger side="left"  sign="1"/>
+    <xacro:finger side="right" sign="-1"/>
+
+    <!-- Frame del efector final (Tool Center Point), sin masa -->
+    <joint name="tool0_joint" type="fixed">
+      <parent link="gripper_base"/>
+      <child link="tool0"/>
+      <origin xyz="0 0 ${palm_z + finger_z}" rpy="0 0 0"/>
+    </joint>
+    <link name="tool0"/>
+
+  </xacro:macro>
+
+</robot>

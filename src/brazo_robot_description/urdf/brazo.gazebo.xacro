@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<!--
+  Extensiones para Gazebo Sim (gz-sim).
+  - JointStatePublisher: publica el estado de las articulaciones (se puentea a /joint_states).
+  - JointPositionController: un controlador PID de posicion por articulacion.
+    Topic de comando en Gazebo: /model/<modelo>/joint/<joint>/0/cmd_pos
+
+  El argumento use_ignition=true selecciona los nombres de plugin de
+  Gazebo Fortress (ROS 2 Humble); false usa los de Gazebo Harmonic (ROS 2 Jazzy).
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:arg name="use_ignition" default="false"/>
+
+  <xacro:if value="$(arg use_ignition)">
+    <xacro:property name="gz_lib" value="ignition-gazebo"/>
+    <xacro:property name="gz_ns"  value="ignition::gazebo"/>
+  </xacro:if>
+  <xacro:unless value="$(arg use_ignition)">
+    <xacro:property name="gz_lib" value="gz-sim"/>
+    <xacro:property name="gz_ns"  value="gz::sim"/>
+  </xacro:unless>
+
+  <!-- Publicador de estados de articulaciones -->
+  <gazebo>
+    <plugin filename="${gz_lib}-joint-state-publisher-system"
+            name="${gz_ns}::systems::JointStatePublisher"/>
+  </gazebo>
+
+  <!-- Controlador de posicion por articulacion -->
+  <xacro:macro name="position_controller" params="joint p i d">
+    <gazebo>
+      <plugin filename="${gz_lib}-joint-position-controller-system"
+              name="${gz_ns}::systems::JointPositionController">
+        <joint_name>${joint}</joint_name>
+        <p_gain>${p}</p_gain>
+        <i_gain>${i}</i_gain>
+        <d_gain>${d}</d_gain>
+        <i_max>1</i_max>
+        <i_min>-1</i_min>
+      </plugin>
+    </gazebo>
+  </xacro:macro>
+
+  <xacro:position_controller joint="joint1" p="30" i="0.5" d="3"/>
+  <xacro:position_controller joint="joint2" p="60" i="1.0" d="5"/>
+  <xacro:position_controller joint="joint3" p="40" i="0.5" d="3"/>
+  <xacro:position_controller joint="joint4" p="15" i="0.1" d="1"/>
+  <xacro:position_controller joint="gripper_roll_joint" p="5" i="0.05" d="0.3"/>
+  <xacro:position_controller joint="finger_left_joint"  p="50" i="0.1" d="2"/>
+  <xacro:position_controller joint="finger_right_joint" p="50" i="0.1" d="2"/>
+
+  <!-- Friccion en los dedos para poder sujetar objetos -->
+  <gazebo reference="finger_left">
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+  </gazebo>
+  <gazebo reference="finger_right">
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+  </gazebo>
+
+</robot>

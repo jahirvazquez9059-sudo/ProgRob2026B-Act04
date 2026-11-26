@@ -1,0 +1,195 @@
+<?xml version="1.0"?>
+<!--
+  Brazo robotico de 5 GDL + gripper de 2 dedos.
+
+  Arbol cinematico:
+    world
+     └─ world_joint (fixed)
+        base_link
+         └─ joint1 (revolute, Z)  -> link1  (torre / cintura)
+             └─ joint2 (revolute, Y) -> link2 (hombro / brazo)
+                 └─ joint3 (revolute, Y) -> link3 (codo / antebrazo)
+                     └─ joint4 (revolute, Y) -> link4 (muneca pitch)
+                         └─ gripper_roll_joint (continuous, Z) -> gripper_base
+                              ├─ finger_left_joint  (prismatic)
+                              ├─ finger_right_joint (prismatic)
+                              └─ tool0_joint (fixed) -> tool0  (efector final)
+-->
+<robot name="brazo" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find brazo_robot_description)/urdf/inertial_macros.xacro"/>
+  <xacro:include filename="$(find brazo_robot_description)/urdf/materials.xacro"/>
+  <xacro:include filename="$(find brazo_robot_description)/urdf/gripper.xacro"/>
+  <xacro:include filename="$(find brazo_robot_description)/urdf/brazo.gazebo.xacro"/>
+
+  <!-- ===================== Constantes ===================== -->
+  <xacro:property name="PI" value="3.14159265359"/>
+
+  <xacro:property name="base_radius" value="0.10"/>
+  <xacro:property name="base_height" value="0.05"/>
+  <xacro:property name="base_mass"   value="2.0"/>
+
+  <xacro:property name="link1_radius" value="0.04"/>
+  <xacro:property name="link1_length" value="0.20"/>
+  <xacro:property name="link1_mass"   value="0.8"/>
+
+  <xacro:property name="link2_width"  value="0.05"/>
+  <xacro:property name="link2_length" value="0.30"/>
+  <xacro:property name="link2_mass"   value="0.6"/>
+
+  <xacro:property name="link3_width"  value="0.04"/>
+  <xacro:property name="link3_length" value="0.25"/>
+  <xacro:property name="link3_mass"   value="0.4"/>
+
+  <xacro:property name="link4_radius" value="0.03"/>
+  <xacro:property name="link4_length" value="0.06"/>
+  <xacro:property name="link4_mass"   value="0.15"/>
+
+  <xacro:property name="joint_radius" value="0.035"/>  <!-- esfera decorativa en las juntas -->
+
+  <!-- ===================== Links y Joints ===================== -->
+
+  <!-- Frame fijo al mundo: ancla el robot para que no se caiga en Gazebo -->
+  <link name="world"/>
+  <joint name="world_joint" type="fixed">
+    <parent link="world"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Base -->
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
+      <geometry><cylinder radius="${base_radius}" length="${base_height}"/></geometry>
+      <material name="gris_oscuro"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
+      <geometry><cylinder radius="${base_radius}" length="${base_height}"/></geometry>
+    </collision>
+    <xacro:inertial_cylinder mass="${base_mass}" radius="${base_radius}" length="${base_height}">
+      <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
+    </xacro:inertial_cylinder>
+  </link>
+
+  <!-- Joint 1: cintura (giro sobre Z) -->
+  <joint name="joint1" type="revolute">
+    <parent link="base_link"/>
+    <child link="link1"/>
+    <origin xyz="0 0 ${base_height}" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="${-PI}" upper="${PI}" effort="50.0" velocity="1.5"/>
+    <dynamics damping="0.5" friction="0.1"/>
+  </joint>
+
+  <!-- Link 1: torre -->
+  <link name="link1">
+    <visual>
+      <origin xyz="0 0 ${link1_length/2}" rpy="0 0 0"/>
+      <geometry><cylinder radius="${link1_radius}" length="${link1_length}"/></geometry>
+      <material name="naranja"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${link1_length/2}" rpy="0 0 0"/>
+      <geometry><cylinder radius="${link1_radius}" length="${link1_length}"/></geometry>
+    </collision>
+    <xacro:inertial_cylinder mass="${link1_mass}" radius="${link1_radius}" length="${link1_length}">
+      <origin xyz="0 0 ${link1_length/2}" rpy="0 0 0"/>
+    </xacro:inertial_cylinder>
+  </link>
+
+  <!-- Joint 2: hombro (pitch sobre Y) -->
+  <joint name="joint2" type="revolute">
+    <parent link="link1"/>
+    <child link="link2"/>
+    <origin xyz="0 0 ${link1_length}" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="${-PI/2}" upper="${PI/2}" effort="50.0" velocity="1.0"/>
+    <dynamics damping="0.7" friction="0.1"/>
+  </joint>
+
+  <!-- Link 2: brazo -->
+  <link name="link2">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><sphere radius="${joint_radius}"/></geometry>
+      <material name="blanco"/>
+    </visual>
+    <visual>
+      <origin xyz="0 0 ${link2_length/2}" rpy="0 0 0"/>
+      <geometry><box size="${link2_width} ${link2_width} ${link2_length}"/></geometry>
+      <material name="azul"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${link2_length/2}" rpy="0 0 0"/>
+      <geometry><box size="${link2_width} ${link2_width} ${link2_length}"/></geometry>
+    </collision>
+    <xacro:inertial_box mass="${link2_mass}" x="${link2_width}" y="${link2_width}" z="${link2_length}">
+      <origin xyz="0 0 ${link2_length/2}" rpy="0 0 0"/>
+    </xacro:inertial_box>
+  </link>
+
+  <!-- Joint 3: codo (pitch sobre Y) -->
+  <joint name="joint3" type="revolute">
+    <parent link="link2"/>
+    <child link="link3"/>
+    <origin xyz="0 0 ${link2_length}" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="${-3*PI/4}" upper="${3*PI/4}" effort="30.0" velocity="1.5"/>
+    <dynamics damping="0.5" friction="0.1"/>
+  </joint>
+
+  <!-- Link 3: antebrazo -->
+  <link name="link3">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><sphere radius="${joint_radius}"/></geometry>
+      <material name="blanco"/>
+    </visual>
+    <visual>
+      <origin xyz="0 0 ${link3_length/2}" rpy="0 0 0"/>
+      <geometry><box size="${link3_width} ${link3_width} ${link3_length}"/></geometry>
+      <material name="naranja"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${link3_length/2}" rpy="0 0 0"/>
+      <geometry><box size="${link3_width} ${link3_width} ${link3_length}"/></geometry>
+    </collision>
+    <xacro:inertial_box mass="${link3_mass}" x="${link3_width}" y="${link3_width}" z="${link3_length}">
+      <origin xyz="0 0 ${link3_length/2}" rpy="0 0 0"/>
+    </xacro:inertial_box>
+  </link>
+
+  <!-- Joint 4: muneca (pitch sobre Y) -->
+  <joint name="joint4" type="revolute">
+    <parent link="link3"/>
+    <child link="link4"/>
+    <origin xyz="0 0 ${link3_length}" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="${-PI/2}" upper="${PI/2}" effort="15.0" velocity="2.0"/>
+    <dynamics damping="0.3" friction="0.05"/>
+  </joint>
+
+  <!-- Link 4: muneca -->
+  <link name="link4">
+    <visual>
+      <origin xyz="0 0 ${link4_length/2}" rpy="0 0 0"/>
+      <geometry><cylinder radius="${link4_radius}" length="${link4_length}"/></geometry>
+      <material name="azul"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${link4_length/2}" rpy="0 0 0"/>
+      <geometry><cylinder radius="${link4_radius}" length="${link4_length}"/></geometry>
+    </collision>
+    <xacro:inertial_cylinder mass="${link4_mass}" radius="${link4_radius}" length="${link4_length}">
+      <origin xyz="0 0 ${link4_length/2}" rpy="0 0 0"/>
+    </xacro:inertial_cylinder>
+  </link>
+
+  <!-- Efector final: gripper (incluye joint continuo de giro + 2 dedos prismaticos) -->
+  <xacro:gripper parent="link4">
+    <origin xyz="0 0 ${link4_length}" rpy="0 0 0"/>
+  </xacro:gripper>
+
+</robot>
